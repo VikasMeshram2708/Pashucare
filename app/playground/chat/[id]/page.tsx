@@ -1,7 +1,16 @@
-import { Suspense } from "react";
+import { notFound } from "next/navigation";
+import ActiveChatInput from "../components/active-chat-input";
+import { getMessages } from "@/actions/get-messages";
+import { SelectMessage } from "@/db/schema/messages";
+import { UIMessage } from "ai";
 
-import ChatMessages from "../components/chat-messages";
-
+function toUIMessages(rows: Array<SelectMessage>): Array<UIMessage> {
+  return rows.map((r) => ({
+    id: r.id,
+    role: r.role,
+    parts: [{ type: "text", text: r.text }],
+  }));
+}
 export default async function ChatDetailPage({
   params,
 }: {
@@ -9,17 +18,19 @@ export default async function ChatDetailPage({
 }) {
   const { id: chatId } = await params;
 
+  if (!chatId) {
+    notFound();
+  }
+
+  const dbMessages = await getMessages({ chatId });
+  const initialMessages = dbMessages.metadata?.dbMessages ?? [];
+  const myMessages = toUIMessages(initialMessages);
+
+  // console.log("initialMessages", initialMessages);
+
   return (
-    <div className="max-w-5xl mx-auto">
-      Chat Detail Page id: {decodeURIComponent(chatId)}
-      {/* messages */}
-      <Suspense
-        fallback={
-          <p className="text-sm text-neutral-400">loading messages...</p>
-        }
-      >
-        <ChatMessages chatId={chatId} />
-      </Suspense>
+    <div className="flex h-screen max-w-5xl mx-auto flex-col">
+      <ActiveChatInput initialMessages={myMessages} />
     </div>
   );
 }

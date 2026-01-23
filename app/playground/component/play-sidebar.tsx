@@ -25,12 +25,15 @@ import {
   BotIcon,
   ChevronsUpDownIcon,
   ClipboardPlusIcon,
+  Edit2Icon,
+  EllipsisVerticalIcon,
   LogOutIcon,
   MessageCircleIcon,
   PlusIcon,
   SearchIcon,
   SettingsIcon,
   TableOfContentsIcon,
+  Trash2Icon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -38,6 +41,21 @@ import Link from "next/link";
 import type { Route } from "next";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SelectChats } from "@/db/schema/chat";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { FormEvent, useRef, useState } from "react";
+import { renameChat } from "@/actions/quick-actions";
+import { Input } from "@/components/ui/input";
 
 type SidebarLink = {
   href: Route;
@@ -68,9 +86,15 @@ const sidebarLinks: readonly SidebarLink[] = [
   },
 ] as const;
 
-export default function PlaySidebar() {
+export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
   const { state } = useSidebar();
+  const router = useRouter();
+
+  const [newName, setNewName] = useState("");
+
   const isCollapsed = state === "collapsed";
+  // close button ref
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 
   return (
     <Sidebar collapsible="icon">
@@ -94,13 +118,19 @@ export default function PlaySidebar() {
         <SidebarGroup>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton>
+              <SidebarMenuButton
+                type="button"
+                onClick={() => router.push("/playground/chat")}
+              >
                 <PlusIcon />
                 New chat
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton>
+              <SidebarMenuButton
+                type="button"
+                onClick={() => toast.warning("Coming soon!")}
+              >
                 <SearchIcon />
                 Search chat
               </SidebarMenuButton>
@@ -116,7 +146,6 @@ export default function PlaySidebar() {
                 <SidebarMenuButton key={item.label} asChild>
                   <Link href={item.href}>
                     <item.icon />
-
                     <span>{item.label}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -132,9 +161,97 @@ export default function PlaySidebar() {
               <SidebarGroupLabel>Your chats</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton>message 1</SidebarMenuButton>
-                  </SidebarMenuItem>
+                  {chats?.map((chat) => (
+                    <SidebarMenuItem key={chat.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <SidebarMenuButton asChild className="flex-1">
+                          <Link href={`/playground/chat/${chat.id}`}>
+                            {chat.title}
+                          </Link>
+                        </SidebarMenuButton>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="ghost" size="sm">
+                              <EllipsisVerticalIcon />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                console.log("Delete chat:", chat.id);
+                              }}
+                            >
+                              <Trash2Icon />
+                              Delete
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant={"ghost"} size={"sm"}>
+                                    <Edit2Icon />
+                                    Rename
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle className="text-center">
+                                      Rename chat
+                                    </DialogTitle>
+                                  </DialogHeader>
+                                  <form
+                                    className="space-y-2"
+                                    onSubmit={async (
+                                      e: FormEvent<HTMLFormElement>,
+                                    ) => {
+                                      e.preventDefault();
+                                      try {
+                                        const res = await renameChat({
+                                          chatId: chat.id,
+                                          name: newName,
+                                        });
+                                        if (!res.success) {
+                                          toast.error(res.message ?? "Failed");
+                                          return;
+                                        }
+                                        toast.success("Renamed");
+                                      } catch (error) {
+                                        console.error(error);
+                                        toast.error("Something went wrong.");
+                                      } finally {
+                                        closeBtnRef.current?.click();
+                                      }
+                                    }}
+                                  >
+                                    <Input
+                                      value={newName}
+                                      onChange={(e) =>
+                                        setNewName(e.currentTarget.value)
+                                      }
+                                      type="text"
+                                      placeholder={
+                                        chat?.title ?? "Enter new name"
+                                      }
+                                    />
+                                    <div className="flex items-center gap-2 justify-end">
+                                      <Button type="submit">Save</Button>
+                                      <DialogClose ref={closeBtnRef} asChild>
+                                        <Button
+                                          type="button"
+                                          variant={"destructive"}
+                                        >
+                                          Close
+                                        </Button>
+                                      </DialogClose>
+                                    </div>
+                                  </form>
+                                </DialogContent>
+                              </Dialog>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </SidebarMenuItem>
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>

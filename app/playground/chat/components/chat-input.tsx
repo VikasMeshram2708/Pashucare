@@ -35,7 +35,7 @@ export default function ChatInput() {
         return;
       }
       // get the id and redirect
-      router.replace(`/playground/chat/${json.metadata?.chatId}`);
+      router.push(`/playground/chat/${json.metadata?.chatId}`);
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong.");

@@ -18,7 +18,7 @@ export async function getMessages({ chatId }: { chatId: string }) {
     // check the last message
     const dbMessages = await db.query.messages.findMany({
       where: (d, { eq }) => eq(d.chatId, chatId),
-      orderBy: (d, { asc }) => asc(d.createdAt),
+      orderBy: (d, { desc }) => desc(d.createdAt),
     });
 
     return {
