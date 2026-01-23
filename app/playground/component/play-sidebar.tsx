@@ -23,22 +23,17 @@ import {
 import {
   ActivityIcon,
   BotIcon,
-  ChevronsUpDownIcon,
   ClipboardPlusIcon,
   EllipsisVerticalIcon,
-  LogOutIcon,
   MessageCircleIcon,
   PlusIcon,
   SearchIcon,
-  SettingsIcon,
   TableOfContentsIcon,
-  UsersIcon,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SelectChats } from "@/db/schema/chat";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -46,6 +41,7 @@ import { Button } from "@/components/ui/button";
 
 import PlayRename from "./play-rename";
 import PlayDelete from "./play-delete";
+import { UserButton } from "@clerk/nextjs";
 
 type SidebarLink = {
   href: Route;
@@ -184,38 +180,20 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
           </SidebarGroup>
         )}
       </SidebarContent>
+      {/* Footer */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Avatar>
-                    <AvatarImage
-                      src="https://ui-avatars.com/api/?name=Anon"
-                      alt="user"
-                    />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                  <p>Anon</p>
-                  <ChevronsUpDownIcon className="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>
-                  <UsersIcon />
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <SettingsIcon />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <LogOutIcon className="text-destructive" />
-                  <span className="text-destructive">Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton asChild>
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonBox: "w-full text-white flex justify-start",
+                  },
+                }}
+                showName={true}
+              />
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
