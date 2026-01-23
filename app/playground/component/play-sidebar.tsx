@@ -32,7 +32,6 @@ import {
   SearchIcon,
   SettingsIcon,
   TableOfContentsIcon,
-  Trash2Icon,
   UsersIcon,
   type LucideIcon,
 } from "lucide-react";
