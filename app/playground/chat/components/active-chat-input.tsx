@@ -3,19 +3,25 @@
 import { Button } from "@/components/ui/button";
 import { SendIcon } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { useChat } from "@ai-sdk/react";
+import { UIMessage, useChat } from "@ai-sdk/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { useParams } from "next/navigation";
 
-export default function ActiveChatInput() {
+export default function ActiveChatInput({
+  initialMessages,
+}: {
+  initialMessages: Array<UIMessage>;
+}) {
+  // console.log("it", initialMessages);
   const [inputValue, setInputValue] = useState("");
 
   // get params
   const { id: chatId } = useParams();
 
-  const { messages, sendMessage } = useChat({
+  const { messages, sendMessage, setMessages } = useChat({
+    messages: initialMessages,
     onFinish: async ({ message }) => {
       if (!chatId) return;
       // Extract assistant text correctly
@@ -62,6 +68,13 @@ export default function ActiveChatInput() {
       }
     },
   });
+
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages, setMessages]);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll while streaming (ChatGPT-like behavior)
