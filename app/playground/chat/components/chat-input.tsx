@@ -36,6 +36,9 @@ export default function ChatInput() {
       }
       // get the id and redirect
       router.push(`/playground/chat/${json.metadata?.chatId}`);
+
+      // Dispatch custom event to refresh sidebar
+      window.dispatchEvent(new CustomEvent("newChatCreated"));
     } catch (error) {
       console.error(error);
       toast.error("Something went wrong.");

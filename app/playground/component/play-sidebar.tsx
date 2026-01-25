@@ -108,6 +108,40 @@ export default function PlaySidebar({
     }
   }, [loading, hasMore, page]);
 
+  // Function to refresh chats - can be called from outside
+  const refreshChats = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/chats?page=1&limit=20`);
+      const result = await response.json();
+
+      if (result.success) {
+        setChats(result.metadata.data);
+        setPage(1);
+        setHasMore(result.metadata.hasMore);
+      }
+    } catch (error) {
+      console.error("Failed to refresh chats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Listen for custom event to refresh chats
+  useEffect(() => {
+    const handleNewChat = () => {
+      refreshChats();
+    };
+
+    // Add event listener
+    window.addEventListener("newChatCreated", handleNewChat);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("newChatCreated", handleNewChat);
+    };
+  }, [refreshChats]);
+
   useEffect(() => {
     if (!loadMoreRef.current) return;
 
