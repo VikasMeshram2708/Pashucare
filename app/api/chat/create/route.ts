@@ -33,13 +33,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { text } = parsed.data;
+
+    // Generate unique slug by adding random suffix
+    const baseSlug = slugify(text);
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const uniqueSlug = `${baseSlug}-${randomSuffix}`;
+
     // store the user text
     // db operation
     const [chat] = await db
       .insert(chats)
       .values({
         title: text ?? "New title",
-        slug: slugify(text),
+        slug: uniqueSlug,
         userId: user?.id,
       })
       .returning();

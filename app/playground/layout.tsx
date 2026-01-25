@@ -17,12 +17,13 @@ export default async function PlayGroundLayout({
 
   const rows = await getChats({ userId: user?.id });
   const chats = rows?.metadata?.data;
+
   return (
     <SidebarProvider>
       <div className="flex w-full">
         {/* Sidebar */}
 
-        <PlaySidebar chats={chats ?? []} />
+        <PlaySidebar initialChats={chats ?? []} />
 
         {/* Main content */}
         <main className="flex-1 min-w-0 p-4">

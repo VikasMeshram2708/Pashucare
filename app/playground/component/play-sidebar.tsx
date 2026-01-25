@@ -34,9 +34,10 @@ import Link from "next/link";
 import type { Route } from "next";
 
 import { SelectChats } from "@/db/schema/chat";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 import PlayRename from "./play-rename";
 import PlayDelete from "./play-delete";
@@ -66,11 +67,67 @@ const sidebarLinks: readonly SidebarLink[] = [
   },
 ] as const;
 
-export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
+export default function PlaySidebar({
+  initialChats,
+}: {
+  initialChats: Array<SelectChats>;
+}) {
   const { state } = useSidebar();
   const router = useRouter();
+  const pathname = usePathname();
+  const [chats, setChats] = useState<SelectChats[]>(initialChats);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const isCollapsed = state === "collapsed";
+
+  // Extract active chat ID from current pathname
+  const activeChatId = pathname.match(/\/playground\/chat\/([^\/]+)/)?.[1];
+
+  const loadMoreChats = useCallback(async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const nextPage = page + 1;
+      const response = await fetch(`/api/chats?page=${nextPage}&limit=20`);
+      const result = await response.json();
+
+      if (result.success) {
+        setChats((prev) => [...prev, ...result.metadata.data]);
+        setPage(nextPage);
+        setHasMore(result.metadata.hasMore);
+      }
+    } catch (error) {
+      console.error("Failed to load more chats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore, page]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMoreChats();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    observerRef.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, loading, page, loadMoreChats]);
 
   return (
     <Sidebar collapsible="icon">
@@ -141,9 +198,18 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
                   {chats?.map((chat) => (
                     <SidebarMenuItem key={chat.id}>
                       <div className="flex items-center justify-between w-full">
-                        <SidebarMenuButton asChild className="flex-1">
+                        <SidebarMenuButton
+                          isActive={chat.id === activeChatId}
+                          asChild
+                          className="flex-1"
+                        >
                           <Link prefetch href={`/playground/chat/${chat.id}`}>
-                            {chat.title}
+                            <span
+                              className="truncate"
+                              title={chat.title as string}
+                            >
+                              {chat.title}
+                            </span>
                           </Link>
                         </SidebarMenuButton>
                         <DropdownMenu>
@@ -167,6 +233,24 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
                       </div>
                     </SidebarMenuItem>
                   ))}
+                  {hasMore && (
+                    <SidebarMenuItem>
+                      <div
+                        ref={loadMoreRef}
+                        className="flex justify-center py-2"
+                      >
+                        {loading ? (
+                          <div className="text-sm text-muted-foreground">
+                            Loading...
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            Scroll for more
+                          </div>
+                        )}
+                      </div>
+                    </SidebarMenuItem>
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
