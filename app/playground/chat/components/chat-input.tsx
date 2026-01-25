@@ -48,14 +48,14 @@ export default function ChatInput() {
   return (
     <>
       <form onSubmit={onSubmit} className="sticky bottom-0 bg-background">
-        <div className="px-2 py-2">
-          <div className="flex items-center gap-2 rounded-full border bg-background p-2 shadow-lg">
+        <div className="px-2 py-2 sm:px-4 sm:py-3">
+          <div className="flex items-center gap-1 sm:gap-2 rounded-full border bg-background p-1.5 sm:p-2 shadow-lg min-w-0">
             <input
               value={inputValue}
               onChange={(e) => setInputValue(e.currentTarget.value)}
               type="text"
               placeholder="Type a message..."
-              className="w-full bg-transparent px-4 py-3 text-lg focus-visible:outline-none"
+              className="w-full bg-transparent px-2 py-1.5 sm:px-4 sm:py-3 text-[13px] sm:text-lg focus-visible:outline-none min-w-0"
               disabled={isLoading}
             />
 
@@ -63,14 +63,14 @@ export default function ChatInput() {
               disabled={isLoading || !inputValue.trim()}
               type="submit"
               size="icon"
-              className="rounded-full"
+              className="rounded-full h-7 w-7 sm:h-10 sm:w-10 flex-shrink-0"
             >
-              <SendIcon />
+              <SendIcon className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
           </div>
         </div>
       </form>
-      <p className="text-sm text-muted-foreground text-center">
+      <p className="text-xs sm:text-sm text-muted-foreground text-center px-2">
         Pashucare ai can make mistakes.{" "}
       </p>
     </>
