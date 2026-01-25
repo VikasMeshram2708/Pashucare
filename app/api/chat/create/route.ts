@@ -4,6 +4,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import * as z from "zod";
 import slugify from "slugify";
+import { revalidatePath } from "next/cache";
 
 const chatSchema = z.object({
   text: z.string().min(1, "Text is required").max(100, "Text is too long"),
@@ -32,13 +33,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { text } = parsed.data;
+
+    // Generate unique slug by adding random suffix
+    const baseSlug = slugify(text);
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    const uniqueSlug = `${baseSlug}-${randomSuffix}`;
+
     // store the user text
     // db operation
     const [chat] = await db
       .insert(chats)
       .values({
         title: text ?? "New title",
-        slug: slugify(text),
+        slug: uniqueSlug,
         userId: user?.id,
       })
       .returning();
@@ -65,5 +72,7 @@ export async function POST(req: NextRequest) {
       success: false,
       message: "Something went wrong.",
     });
+  } finally {
+    revalidatePath("/playground/chat");
   }
 }

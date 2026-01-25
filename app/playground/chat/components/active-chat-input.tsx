@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { SendIcon } from "lucide-react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { SendIcon, Square } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState, useCallback } from "react";
 import { UIMessage, useChat } from "@ai-sdk/react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -24,19 +24,32 @@ export default function ActiveChatInput({
   initialMessages: UIMessage[];
 }) {
   const [inputValue, setInputValue] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const topRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
   const didBootstrapRef = useRef(false);
   const didHydrateRef = useRef(false);
 
   const { id: chatId } = useParams<{ id: string }>();
 
-  const { messages, sendMessage, setMessages } = useChat({
+  const {
+    messages: chatMessages,
+    sendMessage,
+    setMessages: setChatMessages,
+    stop,
+  } = useChat({
     id: chatId,
     onFinish: async ({ message }) => {
       if (!chatId) return;
+      setLoading(false);
 
       const assistantText = getText(message);
-      const lastUser = [...messages].reverse().find((m) => m.role === "user");
+      const lastUser = [...chatMessages]
+        .reverse()
+        .find((m) => m.role === "user");
       const userText = getText(lastUser);
 
       await fetch("/api/chat/save", {
@@ -59,21 +72,21 @@ export default function ActiveChatInput({
     // This prevents overwriting messages that are being processed by the chat hook
     if (
       initialMessages.length > 0 &&
-      messages.length === 0 &&
+      chatMessages.length === 0 &&
       !didHydrateRef.current
     ) {
-      setMessages(initialMessages);
+      setChatMessages(initialMessages);
       didHydrateRef.current = true;
     }
-  }, [initialMessages, setMessages, messages.length]);
+  }, [initialMessages, setChatMessages, chatMessages.length]);
 
   /* ───────── Bootstrap AI ONCE ───────── */
   useEffect(() => {
-    if (!messages.length) return;
+    if (!chatMessages.length) return;
     if (didBootstrapRef.current) return;
 
-    const last = messages.at(-1);
-    const secondLast = messages.at(-2);
+    const last = chatMessages.at(-1);
+    const secondLast = chatMessages.at(-2);
 
     // Only bootstrap if the last message is from user AND there's no assistant response yet
     // This allows AI to respond even when redirecting from /chat
@@ -84,25 +97,97 @@ export default function ActiveChatInput({
       didBootstrapRef.current = true;
       sendMessage({ text: getText(last) });
     }
-  }, [messages, sendMessage]);
+  }, [chatMessages, sendMessage]);
 
   /* ───────── Auto-scroll ───────── */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [chatMessages]);
+
+  /* ───────── Load more messages (infinite scroll) ───────── */
+  const loadMoreMessages = useCallback(async () => {
+    if (loading || !hasMore || !chatId) return;
+
+    setLoading(true);
+    try {
+      const nextPage = page + 1;
+      const response = await fetch(
+        `/api/messages?chatId=${chatId}&page=${nextPage}&limit=50`,
+      );
+      const result = await response.json();
+
+      if (result.success) {
+        const newMessages = result.metadata.dbMessages
+          .reverse()
+          .map((r: { id: string; role: string; text: string }) => ({
+            id: r.id,
+            role: r.role,
+            parts: [{ type: "text", text: r.text }],
+          }));
+
+        setChatMessages([...newMessages, ...chatMessages]);
+        setPage(nextPage);
+        setHasMore(result.metadata.hasMore);
+      }
+    } catch (error) {
+      console.error("Failed to load more messages:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore, page, chatId, chatMessages, setChatMessages]);
+
+  useEffect(() => {
+    if (!topRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMoreMessages();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    observerRef.current.observe(topRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, loading, loadMoreMessages]);
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
+    setLoading(true);
     sendMessage({ text: inputValue });
     setInputValue("");
+  }
+
+  function handleStop() {
+    stop();
+    setLoading(false);
   }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto space-y-6 px-4 py-6">
-        {messages.map((msg, index) => {
+        {hasMore && (
+          <div ref={topRef} className="flex justify-center py-2">
+            {loading ? (
+              <div className="text-sm text-muted-foreground">
+                Loading older messages...
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                Scroll up for more
+              </div>
+            )}
+          </div>
+        )}
+        {chatMessages.map((msg: UIMessage, index: number) => {
           const isUser = msg.role === "user";
           const content = getText(msg);
 
@@ -112,7 +197,7 @@ export default function ActiveChatInput({
           // This happens when redirecting from /chat page where message is loaded from DB
           // and then bootstrap sends it again
           if (isUser && index > 0) {
-            const prevMsg = messages[index - 1];
+            const prevMsg = chatMessages[index - 1];
             const prevContent = getText(prevMsg);
             if (prevMsg?.role === "user" && prevContent === content) {
               return null; // Skip duplicate
@@ -130,13 +215,20 @@ export default function ActiveChatInput({
             >
               <div
                 className={cn(
-                  "max-w-[75%] rounded-xl px-4 py-3 text-[15px] leading-6",
+                  "max-w-[75%] rounded-xl px-4 py-3",
                   isUser
-                    ? "bg-blue-500 text-white"
-                    : "bg-muted text-foreground",
+                    ? "bg-blue-500 text-white text-[15px] leading-6"
+                    : "text-foreground text-[17px] leading-7",
                 )}
               >
-                <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+                <div
+                  className={cn(
+                    !isUser &&
+                      "text-[17px] leading-8 [&_p]:mb-4 [&_p]:mt-4 [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:mb-4 [&_h2]:mt-6 [&_h3]:mb-4 [&_h3]:mt-6 [&_ul]:my-4 [&_ol]:my-4 [&_li]:my-2",
+                  )}
+                >
+                  <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
+                </div>
               </div>
             </div>
           );
@@ -152,12 +244,35 @@ export default function ActiveChatInput({
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type a message..."
               className="w-full bg-transparent px-3 py-2 text-[15px] focus-visible:outline-none"
+              disabled={loading}
             />
-            <Button disabled={!inputValue.trim()} type="submit" size="icon">
-              <SendIcon />
-            </Button>
+            {loading ? (
+              <Button
+                type="button"
+                onClick={handleStop}
+                variant="destructive"
+                size="icon"
+                className="rounded-full"
+              >
+                <Square className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                disabled={!inputValue.trim()}
+                type="submit"
+                size="icon"
+                className="rounded-full"
+              >
+                <SendIcon />
+              </Button>
+            )}
           </div>
         </form>
+        {loading && (
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            AI is responding... Click the stop button to interrupt.
+          </p>
+        )}
       </div>
     </div>
   );

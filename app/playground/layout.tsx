@@ -3,6 +3,7 @@ import PlaySidebar from "./component/play-sidebar";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getChats } from "@/actions/get-chats";
+import MobileHeader from "./component/mobile-header";
 
 export default async function PlayGroundLayout({
   children,
@@ -16,15 +17,19 @@ export default async function PlayGroundLayout({
 
   const rows = await getChats({ userId: user?.id });
   const chats = rows?.metadata?.data;
+
   return (
     <SidebarProvider>
       <div className="flex w-full">
         {/* Sidebar */}
 
-        <PlaySidebar chats={chats ?? []} />
+        <PlaySidebar initialChats={chats ?? []} />
 
         {/* Main content */}
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0 p-4">
+          <MobileHeader />
+          {children}
+        </main>
       </div>
     </SidebarProvider>
   );

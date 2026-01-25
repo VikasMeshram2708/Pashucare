@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowRightIcon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SignUpButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignUpButton } from "@clerk/nextjs";
 import Container from "../Container";
 import { Video } from "@imagekit/next";
 
@@ -38,20 +38,36 @@ export default function Hero() {
 
           {/* CTA */}
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="relative gap-2">
-              <Link
-                href="/playground"
-                className="relative flex items-center gap-2"
+            <SignedIn>
+              <Button
+                type="button"
+                size={"lg"}
+                asChild
+                variant={"outline"}
+                className="rounded-full"
               >
-                <span className="absolute -inset-1 rounded-md bg-foreground/10 blur-md" />
-                <span className="relative">Try PashuCare</span>
-                <ArrowRightIcon className="h-4 w-4" />
-              </Link>
-            </Button>
+                <Link href="/playground">
+                  Start now
+                  <ArrowRightIcon />
+                </Link>
+              </Button>
+            </SignedIn>
+            <SignedOut>
+              <Button size="lg" className="relative gap-2">
+                <Link
+                  href="/playground"
+                  className="relative flex items-center gap-2"
+                >
+                  <span className="absolute -inset-1 rounded-md bg-foreground/10 blur-md" />
+                  <span className="relative">Try PashuCare</span>
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Link>
+              </Button>
 
-            <Button size="lg" variant="outline" asChild>
-              <SignUpButton>Get early access</SignUpButton>
-            </Button>
+              <Button size="lg" variant="outline" asChild>
+                <SignUpButton>Get early access</SignUpButton>
+              </Button>
+            </SignedOut>
           </div>
         </div>
 

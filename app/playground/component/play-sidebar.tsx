@@ -21,41 +21,27 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  ActivityIcon,
   BotIcon,
-  ChevronsUpDownIcon,
   ClipboardPlusIcon,
-  Edit2Icon,
   EllipsisVerticalIcon,
-  LogOutIcon,
+  LayoutDashboardIcon,
   MessageCircleIcon,
   PlusIcon,
   SearchIcon,
-  SettingsIcon,
-  TableOfContentsIcon,
-  Trash2Icon,
-  UsersIcon,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SelectChats } from "@/db/schema/chat";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { FormEvent, useRef, useState } from "react";
-import { renameChat } from "@/actions/quick-actions";
-import { Input } from "@/components/ui/input";
+import { useEffect, useRef, useState, useCallback } from "react";
+
+import PlayRename from "./play-rename";
+import PlayDelete from "./play-delete";
+import { UserButton } from "@clerk/nextjs";
 
 type SidebarLink = {
   href: Route;
@@ -66,18 +52,13 @@ type SidebarLink = {
 const sidebarLinks: readonly SidebarLink[] = [
   {
     href: "/playground",
-    label: "Overview",
-    icon: TableOfContentsIcon,
+    label: "Home",
+    icon: LayoutDashboardIcon,
   },
   {
     href: "/playground/chat",
     label: "Chats",
     icon: MessageCircleIcon,
-  },
-  {
-    href: "/playground/activity",
-    label: "Activity",
-    icon: ActivityIcon,
   },
   {
     href: "/playground/health-report",
@@ -86,15 +67,67 @@ const sidebarLinks: readonly SidebarLink[] = [
   },
 ] as const;
 
-export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
+export default function PlaySidebar({
+  initialChats,
+}: {
+  initialChats: Array<SelectChats>;
+}) {
   const { state } = useSidebar();
   const router = useRouter();
-
-  const [newName, setNewName] = useState("");
+  const pathname = usePathname();
+  const [chats, setChats] = useState<SelectChats[]>(initialChats);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   const isCollapsed = state === "collapsed";
-  // close button ref
-  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  // Extract active chat ID from current pathname
+  const activeChatId = pathname.match(/\/playground\/chat\/([^\/]+)/)?.[1];
+
+  const loadMoreChats = useCallback(async () => {
+    if (loading || !hasMore) return;
+
+    setLoading(true);
+    try {
+      const nextPage = page + 1;
+      const response = await fetch(`/api/chats?page=${nextPage}&limit=20`);
+      const result = await response.json();
+
+      if (result.success) {
+        setChats((prev) => [...prev, ...result.metadata.data]);
+        setPage(nextPage);
+        setHasMore(result.metadata.hasMore);
+      }
+    } catch (error) {
+      console.error("Failed to load more chats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore, page]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMoreChats();
+        }
+      },
+      { threshold: 1.0 },
+    );
+
+    observerRef.current.observe(loadMoreRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, loading, page, loadMoreChats]);
 
   return (
     <Sidebar collapsible="icon">
@@ -105,7 +138,9 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
             {!isCollapsed && (
               <>
                 <h1 className="text-lg md:text-2xl font-bold">
-                  <Link href="/">PashuCare AI</Link>
+                  <Link href="/" prefetch>
+                    PashuCare AI
+                  </Link>
                 </h1>
                 <SidebarTrigger />
               </>
@@ -144,7 +179,7 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
             <SidebarMenuItem>
               {sidebarLinks.map((item) => (
                 <SidebarMenuButton key={item.label} asChild>
-                  <Link href={item.href}>
+                  <Link prefetch href={item.href}>
                     <item.icon />
                     <span>{item.label}</span>
                   </Link>
@@ -154,7 +189,6 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
           </SidebarMenu>
         </SidebarGroup>
         {/* chats */}
-        {/* TODO: hide message when sidebar is collapsed */}
         {!isCollapsed && (
           <SidebarGroup>
             <SidebarGroup>
@@ -164,9 +198,18 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
                   {chats?.map((chat) => (
                     <SidebarMenuItem key={chat.id}>
                       <div className="flex items-center justify-between w-full">
-                        <SidebarMenuButton asChild className="flex-1">
-                          <Link href={`/playground/chat/${chat.id}`}>
-                            {chat.title}
+                        <SidebarMenuButton
+                          isActive={chat.id === activeChatId}
+                          asChild
+                          className="flex-1"
+                        >
+                          <Link prefetch href={`/playground/chat/${chat.id}`}>
+                            <span
+                              className="truncate"
+                              title={chat.title as string}
+                            >
+                              {chat.title}
+                            </span>
                           </Link>
                         </SidebarMenuButton>
                         <DropdownMenu>
@@ -176,120 +219,58 @@ export default function PlaySidebar({ chats }: { chats: Array<SelectChats> }) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                console.log("Delete chat:", chat.id);
-                              }}
-                            >
-                              <Trash2Icon />
-                              Delete
+                            <DropdownMenuItem>
+                              <PlayDelete chatId={chat?.id} />
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant={"ghost"} size={"sm"}>
-                                    <Edit2Icon />
-                                    Rename
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle className="text-center">
-                                      Rename chat
-                                    </DialogTitle>
-                                  </DialogHeader>
-                                  <form
-                                    className="space-y-2"
-                                    onSubmit={async (
-                                      e: FormEvent<HTMLFormElement>,
-                                    ) => {
-                                      e.preventDefault();
-                                      try {
-                                        const res = await renameChat({
-                                          chatId: chat.id,
-                                          name: newName,
-                                        });
-                                        if (!res.success) {
-                                          toast.error(res.message ?? "Failed");
-                                          return;
-                                        }
-                                        toast.success("Renamed");
-                                      } catch (error) {
-                                        console.error(error);
-                                        toast.error("Something went wrong.");
-                                      } finally {
-                                        closeBtnRef.current?.click();
-                                      }
-                                    }}
-                                  >
-                                    <Input
-                                      value={newName}
-                                      onChange={(e) =>
-                                        setNewName(e.currentTarget.value)
-                                      }
-                                      type="text"
-                                      placeholder={
-                                        chat?.title ?? "Enter new name"
-                                      }
-                                    />
-                                    <div className="flex items-center gap-2 justify-end">
-                                      <Button type="submit">Save</Button>
-                                      <DialogClose ref={closeBtnRef} asChild>
-                                        <Button
-                                          type="button"
-                                          variant={"destructive"}
-                                        >
-                                          Close
-                                        </Button>
-                                      </DialogClose>
-                                    </div>
-                                  </form>
-                                </DialogContent>
-                              </Dialog>
+                            <DropdownMenuItem>
+                              <PlayRename
+                                chatId={chat.id}
+                                title={chat.title as string}
+                              />
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
                     </SidebarMenuItem>
                   ))}
+                  {hasMore && (
+                    <SidebarMenuItem>
+                      <div
+                        ref={loadMoreRef}
+                        className="flex justify-center py-2"
+                      >
+                        {loading ? (
+                          <div className="text-sm text-muted-foreground">
+                            Loading...
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground">
+                            Scroll for more
+                          </div>
+                        )}
+                      </div>
+                    </SidebarMenuItem>
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarGroup>
         )}
       </SidebarContent>
+      {/* Footer */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Avatar>
-                    <AvatarImage
-                      src="https://ui-avatars.com/api/?name=Anon"
-                      alt="user"
-                    />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                  <p>Anon</p>
-                  <ChevronsUpDownIcon className="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>
-                  <UsersIcon />
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <SettingsIcon />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <LogOutIcon className="text-destructive" />
-                  <span className="text-destructive">Logout</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SidebarMenuButton asChild>
+              <UserButton
+                appearance={{
+                  elements: {
+                    userButtonBox: "w-full text-white flex justify-start",
+                  },
+                }}
+                showName={isCollapsed ? false : true}
+              />
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

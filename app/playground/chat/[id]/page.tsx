@@ -11,6 +11,7 @@ function toUIMessages(rows: Array<SelectMessage>): Array<UIMessage> {
     parts: [{ type: "text", text: r.text }],
   }));
 }
+
 export default async function ChatDetailPage({
   params,
 }: {
@@ -29,7 +30,7 @@ export default async function ChatDetailPage({
   // console.log("initialMessages", initialMessages);
 
   return (
-    <div className="flex h-screen max-w-5xl mx-auto flex-col">
+    <div className="flex h-[95svh] max-w-5xl mx-auto flex-col">
       <ActiveChatInput initialMessages={myMessages} />
     </div>
   );
