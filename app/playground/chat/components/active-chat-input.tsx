@@ -172,16 +172,16 @@ export default function ActiveChatInput({
   }
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto space-y-6 px-4 py-6">
+    <div className="flex flex-1 flex-col overflow-hidden h-full min-w-0">
+      <div className="flex-1 overflow-y-auto space-y-4 px-2 py-4 sm:space-y-6 sm:px-4 sm:py-6">
         {hasMore && (
           <div ref={topRef} className="flex justify-center py-2">
             {loading ? (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs sm:text-sm text-muted-foreground">
                 Loading older messages...
               </div>
             ) : (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs sm:text-sm text-muted-foreground">
                 Scroll up for more
               </div>
             )}
@@ -208,23 +208,23 @@ export default function ActiveChatInput({
             <div
               key={msg.id}
               className={cn(
-                "flex w-full",
-                index === 0 && "mt-4",
+                "flex w-full min-w-0",
+                index === 0 && "mt-2 sm:mt-4",
                 isUser ? "justify-end" : "justify-start",
               )}
             >
               <div
                 className={cn(
-                  "max-w-[75%] rounded-xl px-4 py-3",
+                  "max-w-[90%] sm:max-w-[75%] rounded-xl px-2 py-1.5 sm:px-4 sm:py-3 min-w-0 break-words",
                   isUser
-                    ? "bg-blue-500 text-white text-[15px] leading-6"
-                    : "text-foreground text-[17px] leading-7",
+                    ? "bg-blue-500 text-white text-[13px] sm:text-[15px] leading-4 sm:leading-6"
+                    : "text-foreground text-[13px] sm:text-[17px] leading-4 sm:leading-7",
                 )}
               >
                 <div
                   className={cn(
                     !isUser &&
-                      "text-[17px] leading-8 [&_p]:mb-4 [&_p]:mt-4 [&_h1]:mb-4 [&_h1]:mt-6 [&_h2]:mb-4 [&_h2]:mt-6 [&_h3]:mb-4 [&_h3]:mt-6 [&_ul]:my-4 [&_ol]:my-4 [&_li]:my-2",
+                      "text-[13px] sm:text-[17px] leading-4 sm:leading-8 [&_p]:mb-2 sm:[&_p]:mb-4 [&_p]:mt-2 sm:[&_p]:mt-4 [&_h1]:mb-2 sm:[&_h1]:mb-4 [&_h1]:mt-3 sm:[&_h1]:mt-6 [&_h2]:mb-2 sm:[&_h2]:mb-4 [&_h2]:mt-3 sm:[&_h2]:mt-6 [&_h3]:mb-2 sm:[&_h3]:mb-4 [&_h3]:mt-3 sm:[&_h3]:mt-6 [&_ul]:my-2 sm:[&_ul]:my-4 [&_ol]:my-2 sm:[&_ol]:my-4 [&_li]:my-1 sm:[&_li]:my-2 overflow-wrap-break-word",
                   )}
                 >
                   <Markdown remarkPlugins={[remarkGfm]}>{content}</Markdown>
@@ -236,14 +236,14 @@ export default function ActiveChatInput({
         <div ref={bottomRef} />
       </div>
 
-      <div className="bg-background px-4 py-3">
+      <div className="bg-background px-2 py-2 sm:px-4 sm:py-3 border-t flex-shrink-0">
         <form onSubmit={onSubmit}>
-          <div className="flex items-center gap-2 rounded-full border px-3 py-2">
+          <div className="flex items-center gap-1 sm:gap-2 rounded-full border px-2 py-1.5 sm:px-3 sm:py-2 min-w-0">
             <input
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type a message..."
-              className="w-full bg-transparent px-3 py-2 text-[15px] focus-visible:outline-none"
+              className="w-full bg-transparent px-2 py-1 sm:px-3 sm:py-2 text-[13px] sm:text-[15px] focus-visible:outline-none min-w-0"
               disabled={loading}
             />
             {loading ? (
@@ -252,24 +252,24 @@ export default function ActiveChatInput({
                 onClick={handleStop}
                 variant="destructive"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full h-7 w-7 sm:h-10 sm:w-10 flex-shrink-0"
               >
-                <Square className="h-4 w-4" />
+                <Square className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             ) : (
               <Button
                 disabled={!inputValue.trim()}
                 type="submit"
                 size="icon"
-                className="rounded-full"
+                className="rounded-full h-7 w-7 sm:h-10 sm:w-10 flex-shrink-0"
               >
-                <SendIcon />
+                <SendIcon className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             )}
           </div>
         </form>
         {loading && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
+          <p className="text-xs text-muted-foreground mt-1 sm:mt-2 text-center">
             AI is responding... Click the stop button to interrupt.
           </p>
         )}
