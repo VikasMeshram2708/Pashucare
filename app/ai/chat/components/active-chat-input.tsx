@@ -77,6 +77,14 @@ export default function ActiveChatInput({
     ) {
       setChatMessages(initialMessages);
       didHydrateRef.current = true;
+
+      // Only mark bootstrap as done if we have a complete conversation (user + assistant)
+      const hasCompleteConversation = initialMessages.some(
+        (msg) => msg.role === "assistant",
+      );
+      if (hasCompleteConversation) {
+        didBootstrapRef.current = true;
+      }
     }
   }, [initialMessages, setChatMessages, chatMessages.length]);
 

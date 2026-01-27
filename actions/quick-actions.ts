@@ -47,7 +47,7 @@ export const deleteChat = async ({ chatId }: { chatId: string }) => {
       message: "Something went wrong.",
     };
   } finally {
-    revalidatePath("/playground/chat");
+    revalidatePath("/ai/chat");
   }
 };
 
@@ -110,6 +110,6 @@ export const renameChat = async ({
       message: "Something went wrong.",
     };
   } finally {
-    revalidatePath("/playground/chat");
+    revalidatePath("/ai/chat");
   }
 };

@@ -73,6 +73,6 @@ export async function POST(req: NextRequest) {
       message: "Something went wrong.",
     });
   } finally {
-    revalidatePath("/playground/chat");
+    revalidatePath("/ai/chat");
   }
 }

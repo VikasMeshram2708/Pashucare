@@ -51,17 +51,17 @@ type SidebarLink = {
 
 const sidebarLinks: readonly SidebarLink[] = [
   {
-    href: "/playground",
+    href: "/ai",
     label: "Home",
     icon: LayoutDashboardIcon,
   },
   {
-    href: "/playground/chat",
+    href: "/ai/chat",
     label: "Chats",
     icon: MessageCircleIcon,
   },
   {
-    href: "/playground/health-report",
+    href: "/ai/health-report",
     label: "Health Reports",
     icon: ClipboardPlusIcon,
   },
@@ -85,7 +85,7 @@ export default function PlaySidebar({
   const isCollapsed = state === "collapsed";
 
   // Extract active chat ID from current pathname
-  const activeChatId = pathname.match(/\/playground\/chat\/([^\/]+)/)?.[1];
+  const activeChatId = pathname.match(/\/ai\/chat\/([^\/]+)/)?.[1];
 
   const loadMoreChats = useCallback(async () => {
     if (loading || !hasMore) return;
@@ -133,12 +133,25 @@ export default function PlaySidebar({
       refreshChats();
     };
 
-    // Add event listener
+    const handleChatDeleted = (event: CustomEvent) => {
+      const { chatId } = event.detail;
+      // Immediately remove the deleted chat from state
+      setChats((prev) => prev.filter((chat) => chat.id !== chatId));
+      // Also refresh to get updated data
+      refreshChats();
+    };
+
+    // Add event listeners
     window.addEventListener("newChatCreated", handleNewChat);
+    window.addEventListener("chatDeleted", handleChatDeleted as EventListener);
 
     // Cleanup
     return () => {
       window.removeEventListener("newChatCreated", handleNewChat);
+      window.removeEventListener(
+        "chatDeleted",
+        handleChatDeleted as EventListener,
+      );
     };
   }, [refreshChats]);
 
@@ -189,7 +202,7 @@ export default function PlaySidebar({
             <SidebarMenuItem>
               <SidebarMenuButton
                 type="button"
-                onClick={() => router.push("/playground/chat")}
+                onClick={() => router.push("/ai/chat")}
               >
                 <PlusIcon />
                 New chat
@@ -237,7 +250,7 @@ export default function PlaySidebar({
                           asChild
                           className="flex-1"
                         >
-                          <Link prefetch href={`/playground/chat/${chat.id}`}>
+                          <Link prefetch href={`/ai/chat/${chat.id}`}>
                             <span
                               className="truncate"
                               title={chat.title as string}

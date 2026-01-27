@@ -46,7 +46,7 @@ export default function Hero() {
                 variant={"outline"}
                 className="rounded-full"
               >
-                <Link href="/playground">
+                <Link href="/ai">
                   Start now
                   <ArrowRightIcon />
                 </Link>
@@ -54,10 +54,7 @@ export default function Hero() {
             </SignedIn>
             <SignedOut>
               <Button size="lg" className="relative gap-2">
-                <Link
-                  href="/playground"
-                  className="relative flex items-center gap-2"
-                >
+                <Link href="/ai" className="relative flex items-center gap-2">
                   <span className="absolute -inset-1 rounded-md bg-foreground/10 blur-md" />
                   <span className="relative">Try PashuCare</span>
                   <ArrowRightIcon className="h-4 w-4" />

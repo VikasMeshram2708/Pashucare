@@ -5,7 +5,8 @@ import { SelectMessage } from "@/db/schema/messages";
 import { UIMessage } from "ai";
 
 function toUIMessages(rows: Array<SelectMessage>): Array<UIMessage> {
-  return rows.map((r) => ({
+  // Reverse the order to show messages chronologically (oldest first)
+  return rows.reverse().map((r) => ({
     id: r.id,
     role: r.role,
     parts: [{ type: "text", text: r.text }],

@@ -69,8 +69,8 @@ export default function CTA() {
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <SignedIn>
               <Button asChild size="lg" className="gap-2">
-                <Link href="/playground">
-                  Go to playground
+                <Link href="/ai">
+                  Start now
                   <ArrowRightIcon className="h-4 w-4" />
                 </Link>
               </Button>

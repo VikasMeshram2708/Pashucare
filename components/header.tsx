@@ -26,8 +26,8 @@ export function Header() {
       label: "Home",
     },
     {
-      href: "/playground",
-      label: "Playground",
+      href: "/ai",
+      label: "AI",
     },
     {
       href: "/contact",

@@ -35,7 +35,7 @@ export default function ChatInput() {
         return;
       }
       // get the id and redirect
-      router.push(`/playground/chat/${json.metadata?.chatId}`);
+      router.push(`/ai/chat/${json.metadata?.chatId}`);
 
       // Dispatch custom event to refresh sidebar
       window.dispatchEvent(new CustomEvent("newChatCreated"));
@@ -44,7 +44,6 @@ export default function ChatInput() {
       toast.error("Something went wrong.");
     } finally {
       setIsLoading(false);
-      // TODO: empty the input
     }
   }
 
@@ -66,7 +65,7 @@ export default function ChatInput() {
               disabled={isLoading || !inputValue.trim()}
               type="submit"
               size="icon"
-              className="rounded-full h-7 w-7 sm:h-10 sm:w-10 flex-shrink-0"
+              className="rounded-full h-7 w-7 sm:h-10 sm:w-10 shrink-0"
             >
               <SendIcon className="h-3 w-3 sm:h-4 sm:w-4" />
             </Button>
