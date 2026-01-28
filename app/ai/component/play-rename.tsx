@@ -29,9 +29,9 @@ export default function PlayRename({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="flex items-center gap-2">
-          <Edit2Icon />
-          Rename
+        <button className="px-2 py-1 flex items-center gap-2">
+          <Edit2Icon className="size-4" />
+          <span className="text-sm">Rename</span>
         </button>
       </DialogTrigger>
       <DialogContent>

@@ -269,7 +269,7 @@ export default function PlaySidebar({
                             <DropdownMenuItem>
                               <PlayDelete chatId={chat?.id} />
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem asChild>
                               <PlayRename
                                 chatId={chat.id}
                                 title={chat.title as string}
