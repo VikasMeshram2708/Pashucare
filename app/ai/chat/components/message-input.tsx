@@ -13,15 +13,28 @@ export default function MessageInput({
       {messages?.map((msg) => (
         <div
           key={msg.id}
-          className={cn(msg.role === "user" ? "self-end" : "self-end")}
+          className={cn(
+            "max-w-[85%] sm:max-w-[75%]",
+            msg.role === "user" ? "self-end" : "self-start",
+          )}
         >
           <div
             className={cn(
-              msg.role === "assistant" &&
-                "text-[13px] sm:text-[17px] leading-4 sm:leading-8 [&_p]:mb-2 sm:[&_p]:mb-4 [&_p]:mt-2 sm:[&_p]:mt-4 [&_h1]:mb-2 sm:[&_h1]:mb-4 [&_h1]:mt-3 sm:[&_h1]:mt-6 [&_h2]:mb-2 sm:[&_h2]:mb-4 [&_h2]:mt-3 sm:[&_h2]:mt-6 [&_h3]:mb-2 sm:[&_h3]:mb-4 [&_h3]:mt-3 sm:[&_h3]:mt-6 [&_ul]:my-2 sm:[&_ul]:my-4 [&_ol]:my-2 sm:[&_ol]:my-4 [&_li]:my-1 sm:[&_li]:my-2 overflow-wrap-break-word",
+              "rounded-2xl px-4 py-2 sm:px-6 sm:py-3",
+              msg.role === "user"
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100",
             )}
           >
-            <Markdown remarkPlugins={[remarkGfm]}>{msg.text}</Markdown>
+            {msg.role === "assistant" ? (
+              <div className="text-[13px] sm:text-[16px] leading-5 sm:leading-7 [&_p]:mb-3 [&_p]:mt-0 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:mb-1.5 [&_li]:leading-5 [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-3 [&_h1]:mt-4 [&_h2]:text-base [&_h2]:font-bold [&_h2]:mb-2 [&_h2]:mt-4 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mb-2 [&_h3]:mt-3 [&_strong]:font-bold [&_strong]:text-gray-800 dark:[&_strong]:text-gray-200 overflow-wrap-anywhere">
+                <Markdown remarkPlugins={[remarkGfm]}>{msg.text}</Markdown>
+              </div>
+            ) : (
+              <div className="text-[13px] sm:text-[16px] leading-5 overflow-wrap-anywhere">
+                {msg.text}
+              </div>
+            )}
           </div>
         </div>
       ))}
