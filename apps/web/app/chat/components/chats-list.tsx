@@ -18,12 +18,12 @@ import { toast } from "sonner";
 export default function ChatsList() {
   return (
     <section>
-      <SidebarMenu>
-        {Array.from({ length: 10 }).map((_, idx) => (
+      <SidebarMenu className="h-screen overflow-y-auto">
+        {Array.from({ length: 100 }).map((_, idx) => (
           <SidebarMenuItem key={idx}>
             {/* MAIN ROW BUTTON */}
             <SidebarMenuButton asChild>
-              <Link href="#">
+              <Link href={`/chat/${idx + 1}`}>
                 <span className="truncate">{idx + 1} Lorem, ipsum.</span>
               </Link>
             </SidebarMenuButton>

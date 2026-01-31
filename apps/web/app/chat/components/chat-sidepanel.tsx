@@ -1,6 +1,7 @@
 "use client";
 
 import { LogoFn } from "@/components/header";
+import { dark } from "@clerk/themes";
 
 import {
   Sidebar,
@@ -11,6 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
   useSidebar,
@@ -19,6 +21,7 @@ import SidePanelQuickActions from "./sp-quick-actions";
 import ChatsList from "./chats-list";
 
 import { UserButton } from "@clerk/nextjs";
+import { ClipboardPlusIcon, LayoutDashboardIcon } from "lucide-react";
 
 export default function ChatSidePanel() {
   const { state } = useSidebar();
@@ -47,24 +50,51 @@ export default function ChatSidePanel() {
         <SidePanelQuickActions isCollapsed={isCollapsed} />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="flex min-h-0 flex-col">
+        {/* Links */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-primary">Links</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <LayoutDashboardIcon />
+                  Dashboard
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <ClipboardPlusIcon />
+                  Reports Check
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Chats */}
         {!isCollapsed && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Your chats</SidebarGroupLabel>
-            <SidebarGroupContent>
+          <SidebarGroup className="flex min-h-0 flex-col">
+            <SidebarGroupLabel className="text-primary">
+              Your chats
+            </SidebarGroupLabel>
+
+            <SidebarGroupContent className="min-h-0 flex-1 overflow-y-auto">
               <ChatsList />
             </SidebarGroupContent>
           </SidebarGroup>
         )}
       </SidebarContent>
+      {/* Footer */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-center">
             <UserButton
               showName
               appearance={{
+                theme: dark,
                 elements: {
-                  userButtonBox: "text-white",
+                  userButtonBox: "text-primary",
                 },
               }}
             />

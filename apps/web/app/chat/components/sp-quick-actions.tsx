@@ -16,15 +16,21 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
 } from "@/components/ui/sidebar";
+import { useRouter } from "next/navigation";
 
 export default function SidePanelQuickActions({
   isCollapsed,
 }: {
   isCollapsed: boolean;
 }) {
+  const router = useRouter();
   return (
     <SidebarGroup>
-      {!isCollapsed && <SidebarGroupLabel>Quick actions</SidebarGroupLabel>}
+      {!isCollapsed && (
+        <SidebarGroupLabel className="text-primary">
+          Quick actions
+        </SidebarGroupLabel>
+      )}
 
       <SidebarGroupContent
         className={
@@ -34,6 +40,8 @@ export default function SidePanelQuickActions({
         }
       >
         <Button
+          type="button"
+          onClick={() => router.push("/chat")}
           size={isCollapsed ? "icon" : "default"}
           className={isCollapsed ? "size-7 rounded-full" : "rounded-full"}
         >
