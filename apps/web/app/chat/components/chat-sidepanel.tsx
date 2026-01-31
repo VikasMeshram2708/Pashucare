@@ -11,28 +11,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import SidePanelQuickActions from "./sp-quick-actions";
 import ChatsList from "./chats-list";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  ChevronsUpDownIcon,
-  SettingsIcon,
-  User2Icon,
-  UsersIcon,
-} from "lucide-react";
-import { UserButton, useUser } from "@clerk/nextjs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+
+import { UserButton } from "@clerk/nextjs";
 
 export default function ChatSidePanel() {
   const { state } = useSidebar();
