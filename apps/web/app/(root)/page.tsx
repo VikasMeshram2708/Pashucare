@@ -1,32 +1,15 @@
-"use client";
-import { Button } from "@/components/ui/button";
-import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
-import { Unauthenticated, Authenticated, useQuery } from "convex/react";
+import Hero from "@/components/(home)/hero";
+import Container from "@/components/Container";
+import { GradientBackground } from "@/components/gradient-wrapper";
 
 export default function Home() {
   return (
     <div className="">
-      <Unauthenticated>
-        <Button asChild>
-          <SignUpButton />
-        </Button>
-        <Button variant={"outline"} asChild>
-          <SignInButton />
-        </Button>
-      </Unauthenticated>
-      <Authenticated>
-        <UserButton />
-        <p>Welcome back!</p>
-      </Authenticated>
+      {/*  gradient bd*/}
+      <GradientBackground />
+      <Container>
+        <Hero />
+      </Container>
     </div>
   );
 }
-
-// function Content() {
-//   const {} = useQuery(api.)
-//   return (
-//     <div>
-
-//     </div>
-//   )
-// }

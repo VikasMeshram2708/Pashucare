@@ -1,10 +1,11 @@
 "use client";
 
+import { Image, ImageKitProvider } from "@imagekit/next";
+
 import { SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { Authenticated, Unauthenticated } from "convex/react";
 import Link from "next/link";
 import { Button } from "./ui/button";
-import Image from "next/image";
 import {
   Sheet,
   SheetContent,
@@ -14,6 +15,7 @@ import {
   SheetTrigger,
 } from "./ui/sheet";
 import { MenuIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Header() {
   const navLinks = [
@@ -31,17 +33,10 @@ export default function Header() {
     },
   ] as const;
   return (
-    <header className="p-4 sticky top-0 bg-background/75 backdrop-blur-lg">
+    <header className="p-4 sticky top-0 bg-background/75 backdrop-blur-lg z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/">
-          <Image
-            src="https://ik.imagekit.io/kxstc2rku/pashucare/veterinary%20ai/main_logo.png?updatedAt=1769840319703"
-            width={200}
-            height={10}
-            alt="pashucare_official_logo"
-            className="object-cover"
-            priority
-          />
+          <LogoFn />
         </Link>
         <nav className="hidden lg:flex items-center gap-4">
           {navLinks.map((link) => (
@@ -64,14 +59,7 @@ export default function Header() {
               <SheetHeader>
                 <SheetTitle>
                   <Link href="/" className="flex items-center">
-                    <Image
-                      src="https://ik.imagekit.io/kxstc2rku/pashucare/veterinary%20ai/logo.png"
-                      width={50}
-                      height={50}
-                      alt="pashucare_official_logo"
-                      className="object-cover"
-                    />
-                    <h1 className="font-bold">PashuCare AI</h1>
+                    <LogoFn />
                   </Link>
                 </SheetTitle>
               </SheetHeader>
@@ -117,5 +105,22 @@ export default function Header() {
         </div>
       </div>
     </header>
+  );
+}
+
+function LogoFn({ className }: { className?: string }) {
+  const urlEndpoint = "https://ik.imagekit.io/kxstc2rku";
+  return (
+    <div>
+      <ImageKitProvider urlEndpoint={urlEndpoint}>
+        <Image
+          src="/pashucare/veterinary%20ai/main_logo.png?updatedAt=1769840319703"
+          width={200}
+          height={10}
+          alt="Picture of the author"
+          className={cn("object-cover w-28 md:w-52 h-auto", className)}
+        />
+      </ImageKitProvider>
+    </div>
   );
 }
