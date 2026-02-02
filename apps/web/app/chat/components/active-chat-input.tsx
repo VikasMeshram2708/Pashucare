@@ -20,7 +20,6 @@ import MessageList, { Message } from "./message-list";
 
 interface ActiveChatInputProps {
   id: Id<"chats">;
-  userId: string;
   initialMessages?: Array<{
     _id?: Id<"messages">;
     role: "user" | "assistant" | "system";
@@ -33,7 +32,6 @@ interface ActiveChatInputProps {
 
 export default function ActiveChatInput({
   id,
-  userId,
   autoTrigger = false,
 }: ActiveChatInputProps) {
   const [inputValue, setInputValue] = useState("");
@@ -58,8 +56,8 @@ export default function ActiveChatInput({
     status: paginationStatus,
   } = usePaginatedQuery(
     api.chats.getChatMessages,
-    { chatId: id, userId },
-    { initialNumItems: 20 }
+    { chatId: id },
+    { initialNumItems: 20 },
   );
 
   // Normalize messages
@@ -72,10 +70,8 @@ export default function ActiveChatInput({
     setIsStreaming(false);
 
     if (pendingMessageId && streamingContent) {
-
       updateMessage({
         messageId: pendingMessageId,
-        userId,
         content: streamingContent,
         status: "sent",
       });
@@ -84,7 +80,7 @@ export default function ActiveChatInput({
     setPendingMessageId(null);
     setStreamingContent("");
     textareaRef.current?.focus();
-  }, [pendingMessageId, streamingContent, userId, updateMessage]);
+  }, [pendingMessageId, streamingContent, updateMessage]);
 
   const sendMessage = useCallback(
     async (content: string, skipUserMessage = false) => {
@@ -94,21 +90,22 @@ export default function ActiveChatInput({
       setIsStreaming(true);
       setStreamingContent("");
 
+      let assistantMessageId: Id<"messages"> | null = null;
+      let accumulatedContent = "";
+
       try {
         // 1. Save user message to Convex (unless skipping for auto-trigger)
         if (!skipUserMessage) {
           await createMessage({
             chatId: id,
-            userId,
             role: "user",
             content: content.trim(),
           });
         }
 
         // 2. Create pending assistant message
-        const assistantMessageId = await createMessage({
+        assistantMessageId = await createMessage({
           chatId: id,
-          userId,
           role: "assistant",
           content: "",
         });
@@ -117,7 +114,6 @@ export default function ActiveChatInput({
         // 3. Update status to streaming
         await updateMessage({
           messageId: assistantMessageId,
-          userId,
           status: "streaming",
         });
 
@@ -128,9 +124,9 @@ export default function ActiveChatInput({
         // We pass the currently loaded messages + new user message.
         // Reverse them because `messages` from paginatedQuery is newest-first,
         // but the API/LLM likely expects oldest-first (history).
-        const historyForApi = [...messages].reverse().map(m => ({ 
-           role: m.role, 
-           content: m.content
+        const historyForApi = [...messages].reverse().map((m) => ({
+          role: m.role,
+          content: m.content,
         }));
 
         const response = await fetch(`/api/chat/${id}`, {
@@ -156,7 +152,6 @@ export default function ActiveChatInput({
         // 5. Stream chunks
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
-        let accumulatedContent = "";
 
         while (true) {
           const { done, value } = await reader.read();
@@ -167,21 +162,23 @@ export default function ActiveChatInput({
           setStreamingContent(accumulatedContent);
 
           // Real-time update to Convex
-          await updateMessage({
-            messageId: assistantMessageId,
-            userId,
-            content: accumulatedContent,
-            append: false,
-          });
+          if (assistantMessageId) {
+            await updateMessage({
+              messageId: assistantMessageId,
+              content: accumulatedContent,
+              append: false,
+            });
+          }
         }
 
         // 6. Mark as complete
-        await updateMessage({
-          messageId: assistantMessageId,
-          userId,
-          content: accumulatedContent,
-          status: "sent",
-        });
+        if (assistantMessageId) {
+          await updateMessage({
+            messageId: assistantMessageId,
+            content: accumulatedContent,
+            status: "sent",
+          });
+        }
 
         setStreamingContent("");
         setPendingMessageId(null);
@@ -194,12 +191,11 @@ export default function ActiveChatInput({
           err instanceof Error ? err.message : "Unknown error";
         setError(errorMessage);
 
-        if (pendingMessageId) {
+        if (assistantMessageId) {
           await updateMessage({
-            messageId: pendingMessageId,
-            userId,
+            messageId: assistantMessageId,
             status: "error",
-            content: streamingContent || "Failed to generate response",
+            content: accumulatedContent || "Failed to generate response",
           });
         }
 
@@ -209,15 +205,7 @@ export default function ActiveChatInput({
         textareaRef.current?.focus();
       }
     },
-    [
-      id,
-      userId,
-      messages,
-      createMessage,
-      updateMessage,
-      pendingMessageId,
-      streamingContent,
-    ],
+    [id, messages, createMessage, updateMessage],
   );
 
   // Auto-trigger AI response
@@ -277,7 +265,7 @@ export default function ActiveChatInput({
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Messages Area - Delegated to MessageList */}
-      <MessageList 
+      <MessageList
         messages={messages}
         isLoadingMore={paginationStatus === "LoadingMore"}
         loadMore={() => loadMore(20)}

@@ -11,7 +11,7 @@ const chatSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const { userId, getToken } = await auth();
-    console.log("u", userId);
+
     if (!userId) {
       return NextResponse.json({
         success: false,
@@ -25,8 +25,6 @@ export async function POST(req: NextRequest) {
       throw new Error("Missing Convex token");
     }
     const body = await req.json();
-    console.log("body", body);
-
     // sanitize
     const parsed = chatSchema.safeParse(body);
     if (!parsed.success) {
@@ -38,12 +36,14 @@ export async function POST(req: NextRequest) {
     }
     const { text } = parsed.data;
     // db operation
-    const result = await fetchMutation(api.chats.createChat, {
-      name: text.substring(0, 40) + (text.length > 40 ? "..." : ""),
-      userId,
-      initialMessage: text,
-    });
-    console.log("result", result);
+    const result = await fetchMutation(
+      api.chats.createChat,
+      {
+        name: text.substring(0, 40) + (text.length > 40 ? "..." : ""),
+        initialMessage: text,
+      },
+      { token },
+    );
 
     return new Response(
       JSON.stringify({

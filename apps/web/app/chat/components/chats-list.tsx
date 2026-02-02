@@ -70,11 +70,9 @@ export default function ChatsList() {
     results: chats,
     status,
     loadMore,
-  } = usePaginatedQuery(
-    api.chats.getUserChats,
-    user?.id ? { userId: user.id } : "skip",
-    { initialNumItems: 20 },
-  );
+  } = usePaginatedQuery(api.chats.getUserChats, user?.id ? {} : "skip", {
+    initialNumItems: 20,
+  });
 
   const deleteChat = useMutation(api.chats.softDeleteChat);
   const renameChat = useMutation(api.chats.renameChat);
@@ -83,7 +81,7 @@ export default function ChatsList() {
     if (!user?.id) return;
 
     try {
-      await deleteChat({ chatId: chatId as Id<"chats">, userId: user.id });
+      await deleteChat({ chatId: chatId as Id<"chats"> });
       toast.success("Chat deleted");
 
       // Redirect if we're on the deleted chat's page
@@ -110,7 +108,6 @@ export default function ChatsList() {
     try {
       await renameChat({
         chatId: chatToRename.id as Id<"chats">,
-        userId: user.id,
         name: newName.trim(),
       });
       toast.success("Chat renamed");

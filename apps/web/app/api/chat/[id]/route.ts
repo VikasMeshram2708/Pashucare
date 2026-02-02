@@ -1,6 +1,6 @@
 import { env } from "@/app/env";
 import { systemPrompt } from "@/app/prompts/system-prompt";
-import { Id } from "@/convex/_generated/dataModel";
+// import { Id } from "@/convex/_generated/dataModel";
 import { NextRequest, NextResponse } from "next/server";
 import { OpenAI } from "openai";
 import * as z from "zod";
@@ -26,15 +26,15 @@ const SYSTEM_PROMPT = {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  // { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = await params;
-    const chatId = id as Id<"chats">;
+    // const { id } = await params;
+    // const chatId = id as Id<"chats">;
     const body = await req.json();
 
-    console.log("Chat ID:", chatId);
-    console.log("Request body:", body);
+    // console.log("Chat ID:", chatId);
+    // console.log("Request body:", body);
 
     // Validate request body
     const parsed = chatRequestSchema.safeParse(body);

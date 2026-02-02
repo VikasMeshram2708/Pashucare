@@ -1,15 +1,21 @@
 // convex/chats.ts
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 
 // ==================== QUERIES ====================
 
 export const getUserChats = query({
   args: {
-    userId: v.string(),
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, { userId, paginationOpts }) => {
+  handler: async (ctx, { paginationOpts }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     return ctx.db
       .query("chats")
       .withIndex("by_user_active", (q) =>
@@ -23,15 +29,16 @@ export const getUserChats = query({
 export const getChatById = query({
   args: {
     chatId: v.id("chats"),
-    userId: v.string(),
   },
-  handler: async (ctx, { chatId, userId }) => {
+  handler: async (ctx, { chatId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+    const userId = identity.subject;
+
     const chat = await ctx.db.get(chatId);
-    console.log("getChatById check:", {
-      chatId,
-      userId,
-      foundUserId: chat?.userId,
-    });
+
     if (!chat || chat.userId !== userId || chat.isDeleted) {
       return null;
     }
@@ -43,24 +50,20 @@ export const getChatById = query({
 // IMPORTANT: Updated for usePaginatedQuery
 // ---------------------------------------------------------------------
 
-import { paginationOptsValidator } from "convex/server";
-
 export const getChatMessages = query({
   args: {
     chatId: v.id("chats"),
-    userId: v.string(),
     paginationOpts: paginationOptsValidator,
   },
-  handler: async (ctx, { chatId, userId, paginationOpts }) => {
+  handler: async (ctx, { chatId, paginationOpts }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     // Verify ownership
     const chat = await ctx.db.get(chatId);
-    console.log("getChatMessages check:", {
-      chatId,
-      userId,
-      foundChatId: chat?._id,
-      foundUserId: chat?.userId,
-      isDeleted: chat?.isDeleted,
-    });
 
     if (!chat || chat.userId !== userId || chat.isDeleted) {
       throw new Error(
@@ -81,12 +84,16 @@ export const getChatMessages = query({
 export const createChat = mutation({
   args: {
     name: v.string(),
-    userId: v.string(),
     initialMessage: v.optional(v.string()),
   },
   returns: v.id("chats"),
-  handler: async (ctx, { name, userId, initialMessage }) => {
-    console.log("createChat for userId:", userId);
+  handler: async (ctx, { name, initialMessage }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     const now = Date.now();
 
     const chatId = await ctx.db.insert("chats", {
@@ -116,7 +123,6 @@ export const createChat = mutation({
 export const createMessage = mutation({
   args: {
     chatId: v.id("chats"),
-    userId: v.string(),
     role: v.union(
       v.literal("user"),
       v.literal("assistant"),
@@ -125,7 +131,13 @@ export const createMessage = mutation({
     content: v.string(),
   },
   returns: v.id("messages"),
-  handler: async (ctx, { chatId, userId, role, content }) => {
+  handler: async (ctx, { chatId, role, content }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     const chat = await ctx.db.get(chatId);
     if (!chat || chat.userId !== userId || chat.isDeleted) {
       throw new Error("Unauthorized or chat not found");
@@ -156,7 +168,6 @@ export const createMessage = mutation({
 export const updateMessage = mutation({
   args: {
     messageId: v.id("messages"),
-    userId: v.string(),
     content: v.optional(v.string()),
     status: v.optional(
       v.union(
@@ -169,7 +180,13 @@ export const updateMessage = mutation({
     append: v.optional(v.boolean()),
   },
   returns: v.null(),
-  handler: async (ctx, { messageId, userId, content, status, append }) => {
+  handler: async (ctx, { messageId, content, status, append }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     const message = await ctx.db.get(messageId);
     if (!message) throw new Error("Message not found");
 
@@ -205,10 +222,15 @@ export const updateMessage = mutation({
 export const softDeleteChat = mutation({
   args: {
     chatId: v.id("chats"),
-    userId: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, { chatId, userId }) => {
+  handler: async (ctx, { chatId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     const chat = await ctx.db.get(chatId);
     if (!chat || chat.userId !== userId) {
       throw new Error("Unauthorized");
@@ -225,11 +247,16 @@ export const softDeleteChat = mutation({
 export const renameChat = mutation({
   args: {
     chatId: v.id("chats"),
-    userId: v.string(),
     name: v.string(),
   },
   returns: v.null(),
-  handler: async (ctx, { chatId, userId, name }) => {
+  handler: async (ctx, { chatId, name }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+    const userId = identity.subject;
+
     const chat = await ctx.db.get(chatId);
     if (!chat || chat.userId !== userId) {
       throw new Error("Unauthorized");

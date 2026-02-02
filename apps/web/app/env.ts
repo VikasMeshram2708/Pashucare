@@ -35,10 +35,4 @@ export const env = createEnv({
     console.error("❌ Invalid environment variables:", issues);
     throw new Error("Invalid environment variables");
   },
-  // Called when server variables are accessed on the client.
-  // onInvalidAccess: () => {
-  //   throw new Error(
-  //     "❌ Attempted to access a server-side environment variable on the client",
-  //   );
-  // },
 });

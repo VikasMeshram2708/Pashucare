@@ -18,7 +18,7 @@ export default function ChatIdPage() {
   // Check if chat exists
   const chat = useQuery(
     api.chats.getChatById,
-    user?.id && id ? { chatId: id as Id<"chats">, userId: user.id } : "skip",
+    user?.id && id ? { chatId: id as Id<"chats"> } : "skip",
   );
 
   // Redirect if chat doesn't exist (deleted)
@@ -46,11 +46,7 @@ export default function ChatIdPage() {
 
   return (
     <div className="h-[calc(100vh-4rem)]">
-      <ActiveChatInput
-        id={id as Id<"chats">}
-        userId={user.id}
-        autoTrigger={true}
-      />
+      <ActiveChatInput id={id as Id<"chats">} autoTrigger={true} />
     </div>
   );
 }
