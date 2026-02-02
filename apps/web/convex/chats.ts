@@ -27,6 +27,11 @@ export const getChatById = query({
   },
   handler: async (ctx, { chatId, userId }) => {
     const chat = await ctx.db.get(chatId);
+    console.log("getChatById check:", {
+      chatId,
+      userId,
+      foundUserId: chat?.userId,
+    });
     if (!chat || chat.userId !== userId || chat.isDeleted) {
       return null;
     }
@@ -49,8 +54,18 @@ export const getChatMessages = query({
   handler: async (ctx, { chatId, userId, paginationOpts }) => {
     // Verify ownership
     const chat = await ctx.db.get(chatId);
+    console.log("getChatMessages check:", {
+      chatId,
+      userId,
+      foundChatId: chat?._id,
+      foundUserId: chat?.userId,
+      isDeleted: chat?.isDeleted,
+    });
+
     if (!chat || chat.userId !== userId || chat.isDeleted) {
-      throw new Error("Chat not found or unauthorized");
+      throw new Error(
+        `Chat not found or unauthorized (Requested: ${userId}, Found: ${chat?.userId})`,
+      );
     }
 
     return ctx.db
@@ -71,6 +86,7 @@ export const createChat = mutation({
   },
   returns: v.id("chats"),
   handler: async (ctx, { name, userId, initialMessage }) => {
+    console.log("createChat for userId:", userId);
     const now = Date.now();
 
     const chatId = await ctx.db.insert("chats", {
