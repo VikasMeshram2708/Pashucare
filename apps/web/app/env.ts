@@ -7,7 +7,10 @@ export const env = createEnv({
       .string()
       .min(1, "CLERK_JWT_ISSUER_DOMAIN is required"),
     RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
-    CONVEX_DEPLOYMENT: z.string().min(1, "CONVEX_DEPLOYMENT, is requried"),
+    CONVEX_DEPLOYMENT: z
+      .string()
+      .min(1, "CONVEX_DEPLOYMENT, is requried")
+      .optional(),
     MOONSHOTAI_API_KEY: z.string().min(1, "MOONSHOTAI_API_KEY is required"),
   },
   client: {
@@ -16,7 +19,8 @@ export const env = createEnv({
       .min(1, "NEXT_PUBLIC_CONVEX_URL is required"),
     NEXT_PUBLIC_CONVEX_SITE_URL: z
       .string()
-      .min(1, "NEXT_PUBLIC_CONVEX_SITE_URL is required"),
+      .min(1, "NEXT_PUBLIC_CONVEX_SITE_URL is required")
+      .optional(),
   },
   // If you're using Next.js < 13.4.4, you'll need to specify the runtimeEnv manually
   runtimeEnv: {
