@@ -27,11 +27,11 @@ const SYSTEM_PROMPT = {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: Id<"chats"> }> },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
-    const chatId = id;
+    const chatId = id as Id<"chats">;
     const body = await req.json();
 
     console.log("Chat ID:", chatId);
