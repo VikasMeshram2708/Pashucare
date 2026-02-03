@@ -9,24 +9,28 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useEffect } from "react";
 import { Loader2Icon } from "lucide-react";
+import { isValidConvexId } from "@/lib/utils";
 
 export default function ChatIdPage() {
   const { id } = useParams();
   const { user } = useUser();
   const router = useRouter();
 
-  // Check if chat exists
+  const chatId = id as string | undefined;
+  const isIdValid = isValidConvexId(chatId);
+
+  // Check if chat exists (only if ID is valid to prevent Convex crash)
   const chat = useQuery(
     api.chats.getChatById,
-    user?.id && id ? { chatId: id as Id<"chats"> } : "skip",
+    user?.id && isIdValid ? { chatId: chatId as Id<"chats"> } : "skip",
   );
 
-  // Redirect if chat doesn't exist (deleted)
+  // Redirect if ID is invalid or chat doesn't exist (deleted)
   useEffect(() => {
-    if (chat === null) {
+    if (!isIdValid || chat === null) {
       router.replace("/chat");
     }
-  }, [chat, router]);
+  }, [isIdValid, chat, router]);
 
   if (!user) return <div>Please sign in</div>;
 

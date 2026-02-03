@@ -22,6 +22,7 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { assistantProseClasses } from "../components/message-list";
+import { isValidConvexId } from "@/lib/utils";
 
 const MAX_SIZE = 5 * 1024 * 1024;
 
@@ -129,8 +130,9 @@ export default function UploadArea({ chatId }: UploadAreaProps) {
       // Save the report record now that we know analysis has started.
       let reportId: Id<"reports"> | undefined;
       if (storageId) {
+        const validatedChatId = isValidConvexId(chatId) ? chatId : undefined;
         reportId = await saveReport({
-          chatId,
+          chatId: validatedChatId,
           fileId: storageId,
           fileName: file.name,
           mimeType: file.type,

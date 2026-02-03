@@ -13,7 +13,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { cn } from "@/lib/utils";
+import { cn, isValidConvexId } from "@/lib/utils";
 import { useMutation, usePaginatedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import MessageList, { Message } from "./message-list";
@@ -85,6 +85,11 @@ export default function ActiveChatInput({
   const sendMessage = useCallback(
     async (content: string, skipUserMessage = false) => {
       if (!content.trim()) return;
+      if (!isValidConvexId(id)) {
+        console.error("Invalid chatId provided to sendMessage:", id);
+        setError("Invalid chat session. Please start a new chat.");
+        return;
+      }
 
       setError(null);
       setIsStreaming(true);

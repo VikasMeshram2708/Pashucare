@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Id } from "@/convex/_generated/dataModel";
 import { useParams, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, isValidConvexId } from "@/lib/utils";
 
 export default function ChatsList() {
   const { user, isLoaded: isUserLoaded } = useUser();
@@ -67,12 +67,14 @@ export default function ChatsList() {
 
   // Paginated Query for Chats
   const {
-    results: chats,
+    results: rawChats,
     status,
     loadMore,
   } = usePaginatedQuery(api.chats.getUserChats, user?.id ? {} : "skip", {
     initialNumItems: 20,
   });
+
+  const chats = rawChats.filter((chat) => isValidConvexId(chat._id));
 
   const deleteChat = useMutation(api.chats.softDeleteChat);
   const renameChat = useMutation(api.chats.renameChat);
